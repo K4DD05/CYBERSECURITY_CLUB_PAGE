@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security Alert</title>
+<style>
+  :root {
+    --bg: #08090c;
+    --bg-panel: #0e1015;
+    --text-dim: #5b6270;
+    --text-main: #d8dce3;
+    --alert: #ff3b4e;
+    --signal: #35f2a0;
+    --signal-dim: #1c8a5c;
+    --border: #1c1f26;
+    --font-mono: 'Space Mono', 'Courier New', monospace;
+    --font-display: 'Space Mono', 'Courier New', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @font-face {
+    font-family: 'Space Mono';
+    src: local('Space Mono');
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text-main);
+    font-family: var(--font-mono);
+    overflow-x: hidden;
+  }
+
+  #stage {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 24px;
+  }
+
+  /* ---------- scanlines + noise ---------- */
+  #stage::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.025) 0px,
+      rgba(255,255,255,0.025) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    z-index: 50;
+    mix-blend-mode: overlay;
+  }
+
+  /* ---------- PHASE 1: breach terminal ---------- */
+  #breach {
+    width: 100%;
+    max-width: 640px;
+  }
+
+  .alert-bar {
+    background: var(--alert);
+    color: #0a0a0a;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    font-size: clamp(11px, 2.4vw, 13px);
+    padding: 10px 14px;
+    text-align: center;
+    animation: alertPulse 0.9s steps(2) infinite;
+  }
+
+  @keyframes alertPulse {
+    50% { background: #1a0507; color: var(--alert); }
+  }
+
+  .terminal {
+    border: 1px solid var(--border);
+    border-top: none;
+    background: var(--bg-panel);
+    padding: 22px 18px 26px;
+    min-height: 340px;
+  }
+
+  .terminal-head {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #log {
+    font-size: clamp(12px, 3vw, 14px);
+    line-height: 1.9;
+  }
+
+  .log-line {
+    opacity: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .log-line.show { opacity: 1; }
+  .ok { color: var(--text-dim); }
+  .bad { color: var(--alert); }
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--signal);
+    vertical-align: middle;
+    animation: blink 0.9s steps(2) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* glitch shake on the whole stage right before reveal */
+  .glitching {
+    animation: shake 0.35s steps(3) 4;
+  }
+  @keyframes shake {
+    0% { transform: translate(0,0); }
+    25% { transform: translate(-3px,2px); }
+    50% { transform: translate(3px,-2px); }
+    75% { transform: translate(-2px,-1px); }
+    100% { transform: translate(0,0); }
+  }
+
+  .hidden { display: none !important; }
+
+  /* ---------- PHASE 2: reveal ---------- */
+  #reveal {
+    width: 100%;
+    max-width: 640px;
+    text-align: center;
+  }
+
+  .eyebrow {
+    color: var(--signal);
+    font-size: 12px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(26px, 6vw, 42px);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin-bottom: 22px;
+  }
+
+  h1 span { color: var(--signal); }
+
+  .lede {
+    color: var(--text-dim);
+    font-size: clamp(14px, 3vw, 16px);
+    line-height: 1.7;
+    max-width: 480px;
+    margin: 0 auto 34px;
+  }
+
+  .lede strong { color: var(--text-main); font-weight: 700; }
+
+  .panel {
+    border: 1px solid var(--border);
+    background: var(--bg-panel);
+    padding: 22px;
+    text-align: left;
+    margin-bottom: 30px;
+  }
+
+  .panel-row {
+    display: flex;
+    gap: 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-row:last-child { border-bottom: none; }
+  .panel-row .tag {
+    color: var(--signal-dim);
+    flex-shrink: 0;
+    width: 84px;
+  }
+  .panel-row .val { color: var(--text-main); }
+
+  .cta {
+    display: inline-block;
+    background: var(--signal);
+    color: #06110c;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    padding: 15px 30px;
+    border: none;
+    cursor: pointer;
+  }
+
+  .cta:hover { background: #4dffb8; }
+
+  .footnote {
+    margin-top: 22px;
+    color: var(--text-dim);
+    font-size: 11.5px;
+    letter-spacing: 0.02em;
+  }
+
+
+  .qr-panel {
+    margin-top: 8px;
+    padding-top: 30px;
+    border-top: 1px solid var(--border);
+  }
+
+  .qr-panel .eyebrow { margin-bottom: 14px; }
+
+  .qr-panel img {
+    width: 180px;
+    height: 180px;
+    display: block;
+    margin: 0 auto 14px;
+    border: 6px solid var(--signal);
+    background: #fff;
+  }
+
+  .qr-caption {
+    color: var(--text-dim);
+    font-size: 12.5px;
+    letter-spacing: 0.02em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .alert-bar, .cursor, .glitching { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+
+  <!-- PHASE 1 -->
+  <div id="breach">
+    <div class="alert-bar">⚠ A WAVE IS COMING ⚠</div>
+    <div class="terminal">
+      <div class="terminal-head">
+        <span>session://unknown_device</span>
+        <span id="clock">00:00:00</span>
+      </div>
+      <div id="log"></div>
+    </div>
+  </div>
+
+  <!-- PHASE 2 (hidden until reveal) -->
+  <div id="reveal" class="hidden">
+    <div class="eyebrow">nothing was actually taken</div>
+    <h1>If this were <span>real</span>,<br>you'd never have seen it coming.</h1>
+    <p class="lede">
+      That entire sequence — contacts, camera, location, the "extraction" — takes seconds
+      on a real malicious link. No pop-up. No warning bar. No countdown telling you it's happening.
+      <strong>You just did not know it just now, and neither would you then.</strong>
+    </p>
+
+    <div class="panel">
+      <div class="panel-row"><span class="tag">WHAT THIS WAS</span><span class="val">A simulation, built by COMPSSA CYBERSECURITY COMMUNITY to show what a real breach feels like from the inside.</span></div>
+      <div class="panel-row"><span class="tag">WHAT WE DO</span><span class="val">Peer-led cybersecurity training — no experience required, no gatekeeping.</span></div>
+      <div class="panel-row"><span class="tag">WHO IT'S FOR</span><span class="val">Anyone curious enough to still be reading this.</span></div>
+    </div>
+
+    <a href="#" class="cta" id="joinBtn">I want to know how this works →</a>
+    <p class="footnote">COMPSSA CYBERSECURITY COMMUNITY · new semester intake opening soon</p>
+
+    <div class="qr-panel">
+      <div class="eyebrow">click the link below to join the group</div>
+      <p>https://chat.whatsapp.com/L6xtQY2wpWe8LujeSTXOOX?s=cl&p=i&mlu=4&amv=0</p>
+      <p class="qr-caption">COMPSSA CYBERSECURITY COMMUNITY WhatsApp group · opens in WhatsApp</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const sequence = [
+    { text: "> connection established...", cls: "ok", delay: 400 },
+    { text: "> scanning device...", cls: "ok", delay: 900 },
+    { text: "> [ACCESS] contacts.db .......... breached", cls: "bad", delay: 700 },
+    { text: "> [ACCESS] camera_stream ........ live", cls: "bad", delay: 700 },
+    { text: "> [ACCESS] location_history ...... extracted", cls: "bad", delay: 700 },
+    { text: "> [ACCESS] saved_passwords ....... decrypting", cls: "bad", delay: 900 },
+    { text: "> uploading package (14.2mb)...", cls: "ok", delay: 1000 },
+    { text: "> transfer complete.", cls: "bad", delay: 700 },
+    { text: "> _", cls: "ok", delay: 600 }
+  ];
+
+  const log = document.getElementById('log');
+  const clock = document.getElementById('clock');
+  const stage = document.getElementById('stage');
+  const breach = document.getElementById('breach');
+  const reveal = document.getElementById('reveal');
+
+  // fake elapsed clock
+  let seconds = 0;
+  const clockTimer = setInterval(() => {
+    seconds++;
+    const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+    const s = String(seconds % 60).padStart(2, '0');
+    clock.textContent = `00:${m}:${s}`;
+  }, 1000);
+
+  let cumulative = 0;
+  sequence.forEach((line, i) => {
+    cumulative += line.delay;
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = `log-line ${line.cls}`;
+      el.textContent = line.text;
+      if (i === sequence.length - 1) {
+        const cursor = document.createElement('span');
+        cursor.className = 'cursor';
+        el.appendChild(cursor);
+      }
+      log.appendChild(el);
+      requestAnimationFrame(() => el.classList.add('show'));
+    }, cumulative);
+  });
+
+  // after full sequence: glitch shake, then hard cut to reveal
+  setTimeout(() => {
+    stage.classList.add('glitching');
+  }, cumulative + 500);
+
+  setTimeout(() => {
+    clearInterval(clockTimer);
+    stage.classList.remove('glitching');
+    breach.classList.add('hidden');
+    reveal.classList.remove('hidden');
+  }, cumulative + 1000);
+
+  // swap this href for your actual WhatsApp/community link
+  document.getElementById('joinBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    window.location.href = "https://chat.whatsapp.com/REPLACE_WITH_YOUR_LINK";
+  });
+</script>
+
+</body>
+</html>
